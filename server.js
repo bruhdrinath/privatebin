@@ -1,33 +1,43 @@
+import cluster from "cluster"
 import cors from "cors"
 import dotenv from "dotenv"
 import express from "express"
 import mongoose from "mongoose"
-import path, { dirname } from "path"
-import { fileURLToPath } from "url"
+import os from "os"
 import pasteRoutes from "./routes/pasteRoutes.js"
 
 dotenv.config()
-const app = express()
-app.use(cors())
-app.use(express.json())
+const numCPUs = os.cpus().length
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+if (cluster.isPrimary) {
+	console.log(`👑 Primary ${process.pid} is running`)
+	console.log(`🔧 Forking ${numCPUs} workers...`)
+	for (let i = 0; i < numCPUs; i++) {
+		cluster.fork()
+	}
+	cluster.on("exit", (worker, code, signal) => {
+		console.log(`💀 Worker ${worker.process.pid} died. Spawning a new one...`)
+		cluster.fork()
+	})
+} else {
+	const app = express()
+	app.use(
+		cors({
+			origin: process.env.FRONTEND_URL || "*", // Replace with your frontend URL for security
+		})
+	)
+	app.use(express.json())
 
-// Serve static files from "public"
-app.use(express.static(path.join(__dirname, "public")))
+	mongoose
+		.connect(process.env.MONGOURL)
+		.then(() => console.log(`✅ MongoDB connected (Worker ${process.pid})`))
+		.catch((err) => console.error("❌ MongoDB error:", err))
 
-mongoose.connect(process.env.MONGOURL)
+	// Only API routes
+	app.use("/api", pasteRoutes)
 
-// API routes
-app.use("/api", pasteRoutes)
-
-// Serve index.html for any paste id route
-app.get("/:id", (req, res) => {
-	res.sendFile(path.join(__dirname, "public", "index.html"))
-})
-
-const PORT = process.env.PORT ?? 3000
-app.listen(PORT, () => {
-	console.log(`PrivateBin clone running at http://localhost:${PORT}`)
-})
+	const PORT = process.env.PORT ?? 3000
+	app.listen(PORT, () => {
+		console.log(`🚀 Worker ${process.pid} running at http://localhost:${PORT}`)
+	})
+}
