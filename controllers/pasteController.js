@@ -2,22 +2,31 @@ import Paste from "../models/paste.js"
 import { parseExpiry } from "../utils/expirationOptions.js"
 
 export const createPaste = async (req, res) => {
-	const { content, burnAfterRead = false, expiresIn = "24h" } = req.body
+	const { encryptedText, expiry = "1d", burnAfterRead = false } = req.body
+	if (!encryptedText) return res.status(400).json({ error: "Missing text" })
 
-	const expiresAt = parseExpiry(expiresIn)
-	const paste = await Paste.create({ content, burnAfterRead, expiresAt })
+	const expiresAt = parseExpiry(expiry)
+	if (!expiresAt)
+		return res.status(400).json({ error: "Invalid expiry format" })
+
+	const paste = await Paste.create({
+		content: encryptedText,
+		burnAfterRead,
+		expiresAt,
+	})
 
 	res.json({ id: paste._id })
 }
 
 export const getPaste = async (req, res) => {
-	const paste = await Paste.findById(req.params.id)
+	const { id } = req.params
 
+	const paste = await Paste.findById(id)
 	if (!paste) return res.status(404).json({ error: "Paste not found" })
 
-	if (paste.burnAfterRead) {
-		await Paste.findByIdAndDelete(req.params.id)
-	}
+	const response = { content: paste.content }
 
-	res.json({ content: paste.content })
+	if (paste.burnAfterRead) await paste.deleteOne()
+
+	res.json(response)
 }

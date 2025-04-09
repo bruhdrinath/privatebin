@@ -17,7 +17,17 @@
 		"dotenv": "^16.4.7",
 		"express": "^5.1.0",
 		"mongoose": "^8.13.2",
-		"nanoid": "^5.1.5",
+		"nanoid": "^5.1.5"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bruhdrinath/privatebin.git"
+	},
+	"bugs": {
+		"url": "https://github.com/bruhdrinath/privatebin/issues"
+	},
+	"homepage": "https://github.com/bruhdrinath/privatebin#readme",
+	"devDependencies": {
 		"nodemon": "^3.1.9"
 	}
 }

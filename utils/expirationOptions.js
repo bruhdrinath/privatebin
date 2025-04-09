@@ -1,3 +1,4 @@
+// utils/expirationOptions.js
 export const parseExpiry = (input) => {
 	const now = new Date()
 	const match = input.match(/^(\d+)([hdwmy])$/)
