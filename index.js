@@ -24,10 +24,10 @@ app.use("/api", pasteRoutes)
 
 // Self-ping every 12 minutes to keep the app alive or use https://uptimerobot.com/ for uptime monitoring
 // This is a workaround for platforms like Render, which require a ping to keep the app alive
-setInterval(() => {
-	fetch(process.env.ORIGIN)
-		.then(() => console.log("🟢 Self-ping successful"))
-		.catch(() => console.warn("🔴 Self-ping failed"))
-}, 12 * 60 * 1000)
+// setInterval(() => {
+// 	fetch(process.env.ORIGIN)
+// 		.then(() => console.log("🟢 Self-ping successful"))
+// 		.catch(() => console.warn("🔴 Self-ping failed"))
+// }, 12 * 60 * 1000)
 
 export default app
