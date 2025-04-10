@@ -28,6 +28,6 @@ setInterval(() => {
 	fetch(process.env.ORIGIN)
 		.then(() => console.log("🟢 Self-ping successful"))
 		.catch(() => console.warn("🔴 Self-ping failed"))
-}, 1 * 60 * 1000)
+}, 12 * 60 * 1000)
 
 export default app
