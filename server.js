@@ -1,40 +1,29 @@
-import cluster from "cluster"
 import dotenv from "dotenv"
 import mongoose from "mongoose"
-import os from "os"
 import app from "./index.js"
 
 dotenv.config()
 
-const numCPUs = os.cpus().length
 const PORT = process.env.PORT || 3000
 
-if (cluster.isPrimary) {
-	console.log(`👑 Primary process ${process.pid} is running`)
-
-	for (let i = 0; i < numCPUs; i++) {
-		cluster.fork()
-	}
-
-	cluster.on("exit", (worker) => {
-		console.log(`💀 Worker ${worker.process.pid} died. Respawning...`)
-		cluster.fork()
-	})
-} else {
-	// Each worker connects to MongoDB
-	mongoose
-		.connect(process.env.MONGOURL)
-		.then(() => {
-			console.log(`✅ Worker ${process.pid} connected to MongoDB`)
-			app.listen(PORT, () => {
-				console.log(`🚀 Worker ${process.pid} listening on ${process.env.ORIGIN}`)
-			})
-		})
-		.catch((err) => {
-			console.error(
-				`❌ Worker ${process.pid} failed to connect to MongoDB`,
-				err
+mongoose
+	.connect(process.env.MONGOURL)
+	.then(() => {
+		console.log(`✅ Connected to MongoDB`)
+		app.listen(PORT, () => {
+			console.log(
+				`🚀 Server running on ${process.env.ORIGIN || `PORT ${PORT}`}`
 			)
-			process.exit(1)
 		})
-}
+
+		// Self-ping to keep the service alive (Render workaround)
+		setInterval(() => {
+			fetch(process.env.ORIGIN)
+				.then(() => console.log("🟢 Self-ping successful"))
+				.catch((err) => console.warn("🔴 Self-ping failed:", err.message))
+		}, 12 * 60 * 1000)
+	})
+	.catch((err) => {
+		console.error(`❌ Failed to connect to MongoDB`, err)
+		process.exit(1)
+	})
